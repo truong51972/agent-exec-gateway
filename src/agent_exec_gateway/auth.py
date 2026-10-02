@@ -20,8 +20,8 @@ class RequestIdentity:
     external_session_id: str | None = None
 
 
-mcp_request_identity: ContextVar[RequestIdentity] = ContextVar(
-    "mcp_request_identity", default=RequestIdentity()
+mcp_request_identity: ContextVar[RequestIdentity | None] = ContextVar(
+    "mcp_request_identity", default=None
 )
 
 

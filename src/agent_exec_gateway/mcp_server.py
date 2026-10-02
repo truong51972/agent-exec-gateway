@@ -1,7 +1,7 @@
 from mcp.server import MCPServer
 from sqlalchemy import select
 
-from .auth import ClientService, mcp_request_identity
+from .auth import ClientService, RequestIdentity, mcp_request_identity
 from .db import SessionLocal
 from .hosts import HostService
 from .models import Host
@@ -13,7 +13,7 @@ mcp = MCPServer("Agent Exec Gateway")
 
 
 async def _principal(session) -> tuple[str, str | None]:
-    identity = mcp_request_identity.get()
+    identity = mcp_request_identity.get() or RequestIdentity()
     return await ClientService(session).resolve(
         identity.bearer_token,
         protocol="mcp",

@@ -13,10 +13,24 @@ class FileResult:
     output: str
 
 
+def _read_local(path: str) -> str:
+    return Path(path).expanduser().read_text()
+
+
+def _write_local(path: str, content: str) -> None:
+    target = Path(path).expanduser()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content)
+
+
+def _list_local(path: str) -> list[str]:
+    return sorted(item.name for item in Path(path).expanduser().iterdir())
+
+
 class FileTransport:
     async def read_text(self, host: Host, path: str) -> FileResult:
         if host.transport == "local":
-            content = await asyncio.to_thread(Path(path).expanduser().read_text)
+            content = await asyncio.to_thread(_read_local, path)
             return FileResult(content)
 
         ssh = SSHExecutor(host)
@@ -28,13 +42,7 @@ class FileTransport:
 
     async def write_text(self, host: Host, path: str, content: str) -> FileResult:
         if host.transport == "local":
-            target = Path(path).expanduser()
-
-            def write() -> None:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_text(content)
-
-            await asyncio.to_thread(write)
+            await asyncio.to_thread(_write_local, path, content)
             return FileResult(f"wrote {len(content)} characters to {path}")
 
         ssh = SSHExecutor(host)
@@ -46,9 +54,7 @@ class FileTransport:
 
     async def list_dir(self, host: Host, path: str) -> FileResult:
         if host.transport == "local":
-            entries = await asyncio.to_thread(
-                lambda: sorted(item.name for item in Path(path).expanduser().iterdir())
-            )
+            entries = await asyncio.to_thread(_list_local, path)
             return FileResult("\n".join(entries))
 
         ssh = SSHExecutor(host)
