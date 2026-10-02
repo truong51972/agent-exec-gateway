@@ -2,11 +2,11 @@ import sys
 
 from fastapi.testclient import TestClient
 
-from agent_exec_gateway.app import app
+from agent_exec_gateway.app import create_app
 
 
 def test_health_and_approval_execution_flow():
-    with TestClient(app) as client:
+    with TestClient(create_app()) as client:
         health = client.get("/api/health")
         assert health.status_code == 200
         assert health.json() == {"status": "ok"}

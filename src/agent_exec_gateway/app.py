@@ -10,26 +10,32 @@ from .db import init_db
 from .mcp_server import mcp
 from .web import router
 
-raw_mcp_app = mcp.streamable_http_app(streamable_http_path="/")
-mcp_app = MCPRequestContextMiddleware(raw_mcp_app)
+
+def create_app() -> FastAPI:
+    """Create one independent ASGI application and MCP HTTP session manager."""
+    raw_mcp_app = mcp.streamable_http_app(streamable_http_path="/")
+    session_manager = mcp.session_manager
+    mcp_app = MCPRequestContextMiddleware(raw_mcp_app)
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        await init_db()
+        async with session_manager.run():
+            yield
+
+    application = FastAPI(
+        title="Agent Exec Gateway",
+        version="0.2.0",
+        lifespan=lifespan,
+    )
+    application.include_router(router)
+    application.mount(
+        "/static",
+        StaticFiles(directory=str(Path(__file__).parent / "static")),
+        name="static",
+    )
+    application.mount("/mcp", mcp_app)
+    return application
 
 
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    await init_db()
-    async with mcp.session_manager.run():
-        yield
-
-
-app = FastAPI(
-    title="Agent Exec Gateway",
-    version="0.2.0",
-    lifespan=lifespan,
-)
-app.include_router(router)
-app.mount(
-    "/static",
-    StaticFiles(directory=str(Path(__file__).parent / "static")),
-    name="static",
-)
-app.mount("/mcp", mcp_app)
+app = create_app()

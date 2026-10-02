@@ -2,13 +2,13 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from agent_exec_gateway.app import app
+from agent_exec_gateway.app import create_app
 
 
 def test_file_operations_use_normal_policy_and_approval_flow(tmp_path: Path):
     target = tmp_path / "hello.txt"
 
-    with TestClient(app) as client:
+    with TestClient(create_app()) as client:
         submitted = client.post(
             "/api/executions",
             json={
