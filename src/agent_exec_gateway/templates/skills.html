@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Skills · Agent Exec Gateway{% endblock %}
+{% block content %}
+<h1>Skills</h1>
+<div class="muted">Skills describe how agents should use existing host capabilities. They do not execute anything themselves.</div>
+<div class="grid">
+{% for skill in skills %}
+<div class="card">
+<strong>{{ skill.name }}</strong>
+<p>{{ skill.description }}</p>
+<div class="muted">Requires: {{ skill.requires_commands|join(', ') if skill.requires_commands else 'gateway-native' }}</div>
+</div>
+{% endfor %}
+</div>
+<h2>Host capability matrix</h2>
+<table><thead><tr><th>Host</th>{% for s in skills %}<th>{{ s.name }}</th>{% endfor %}</tr></thead><tbody>
+{% for host in hosts %}
+<tr><td>{{ host.name }}</td>
+{% for skill in skills %}
+{% set ns = namespace(found=false, available=false) %}
+{% for cap in capabilities[host.name] %}{% if cap.skill == skill.name %}{% set ns.found=true %}{% set ns.available=cap.available %}{% endif %}{% endfor %}
+<td class="{{ 'available' if ns.available else 'unavailable' if ns.found else '' }}">{{ '✓' if ns.available else '✗' if ns.found else '—' }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}
