@@ -1,0 +1,7 @@
+name: python-test
+description: Run Python tests through uv or pytest.
+requires:
+  commands: [uv]
+permissions:
+  - command: uv
+    args_prefix: [run, pytest]

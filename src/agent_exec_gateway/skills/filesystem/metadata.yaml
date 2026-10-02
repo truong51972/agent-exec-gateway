@@ -1,0 +1,11 @@
+name: filesystem
+description: Read, list, and write files through the gateway's audited file transport.
+requires:
+  commands: []
+permissions:
+  - command: "@file.read"
+    args_prefix: []
+  - command: "@file.list"
+    args_prefix: []
+  - command: "@file.write"
+    args_prefix: []

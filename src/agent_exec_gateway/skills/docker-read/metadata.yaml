@@ -1,0 +1,15 @@
+name: docker-read
+description: Inspect Docker state without starting, stopping, or deleting resources.
+requires:
+  commands: [docker]
+permissions:
+  - command: docker
+    args_prefix: [ps]
+  - command: docker
+    args_prefix: [logs]
+  - command: docker
+    args_prefix: [inspect]
+  - command: docker
+    args_prefix: [images]
+  - command: docker
+    args_prefix: [stats]
