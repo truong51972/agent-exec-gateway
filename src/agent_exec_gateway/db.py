@@ -8,6 +8,9 @@ from .config import get_settings
 from .models import Base, Host
 
 settings = get_settings()
+if settings.database_url.startswith("sqlite"):
+    Path("data").mkdir(parents=True, exist_ok=True)
+
 engine = create_async_engine(settings.database_url)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -18,9 +21,6 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 async def init_db() -> None:
-    if settings.database_url.startswith("sqlite"):
-        Path("data").mkdir(parents=True, exist_ok=True)
-
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 

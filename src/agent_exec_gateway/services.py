@@ -103,7 +103,7 @@ class ExecutionService:
             result = await executor_for(host).execute(
                 execution.argv,
                 execution.cwd,
-                timeout=settings.execution_timeout_seconds,
+                timeout_seconds=settings.execution_timeout_seconds,
             )
             execution.exit_code = result.exit_code
             execution.stdout = result.stdout

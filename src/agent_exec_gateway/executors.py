@@ -18,13 +18,13 @@ class ExecResult:
 
 class Executor(Protocol):
     async def execute(
-        self, argv: list[str], cwd: str | None, *, timeout: float
+        self, argv: list[str], cwd: str | None, *, timeout_seconds: float
     ) -> ExecResult: ...
 
 
 class LocalExecutor:
     async def execute(
-        self, argv: list[str], cwd: str | None, *, timeout: float
+        self, argv: list[str], cwd: str | None, *, timeout_seconds: float
     ) -> ExecResult:
         process = await asyncio.create_subprocess_exec(
             *argv,
@@ -33,7 +33,9 @@ class LocalExecutor:
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=timeout_seconds
+            )
         except TimeoutError:
             process.kill()
             await process.wait()
@@ -50,7 +52,7 @@ class SSHExecutor:
         self.host = host
 
     async def execute(
-        self, argv: list[str], cwd: str | None, *, timeout: float
+        self, argv: list[str], cwd: str | None, *, timeout_seconds: float
     ) -> ExecResult:
         if not self.host.hostname:
             raise ValueError("SSH host is missing hostname")
@@ -69,7 +71,9 @@ class SSHExecutor:
             connect_kwargs["client_keys"] = [self.host.identity_file]
 
         async with asyncssh.connect(**connect_kwargs) as connection:
-            result = await asyncio.wait_for(connection.run(command, check=False), timeout=timeout)
+            result = await asyncio.wait_for(
+                connection.run(command, check=False), timeout=timeout_seconds
+            )
 
         return ExecResult(
             exit_code=result.exit_status,

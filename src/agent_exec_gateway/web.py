@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -8,21 +9,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import get_session
 from .models import Approval, Execution, Host, Policy
-from .schemas import ApprovalRead, ExecRead, ExecRequest, HostCreate, HostRead, PolicyCreate, PolicyRead
+from .schemas import (
+    ApprovalRead,
+    ExecRead,
+    ExecRequest,
+    HostCreate,
+    HostRead,
+    PolicyCreate,
+    PolicyRead,
+)
 from .services import ExecutionService
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, session: AsyncSession = Depends(get_session)):
+async def dashboard(request: Request, session: SessionDep):
     hosts = (await session.scalars(select(Host).order_by(Host.name))).all()
-    approvals = (
-        await session.scalars(
-            select(Approval).where(Approval.status == "pending").order_by(Approval.created_at.desc())
-        )
-    ).all()
+    approvals_query = (
+        select(Approval)
+        .where(Approval.status == "pending")
+        .order_by(Approval.created_at.desc())
+    )
+    approvals = (await session.scalars(approvals_query)).all()
     executions = (
         await session.scalars(select(Execution).order_by(Execution.created_at.desc()).limit(20))
     ).all()
@@ -39,12 +50,12 @@ async def health() -> dict[str, str]:
 
 
 @router.get("/api/hosts", response_model=list[HostRead])
-async def list_hosts(session: AsyncSession = Depends(get_session)):
+async def list_hosts(session: SessionDep):
     return (await session.scalars(select(Host).order_by(Host.name))).all()
 
 
 @router.post("/api/hosts", response_model=HostRead, status_code=201)
-async def create_host(payload: HostCreate, session: AsyncSession = Depends(get_session)):
+async def create_host(payload: HostCreate, session: SessionDep):
     host = Host(**payload.model_dump())
     session.add(host)
     try:
@@ -57,12 +68,12 @@ async def create_host(payload: HostCreate, session: AsyncSession = Depends(get_s
 
 
 @router.get("/api/policies", response_model=list[PolicyRead])
-async def list_policies(session: AsyncSession = Depends(get_session)):
+async def list_policies(session: SessionDep):
     return (await session.scalars(select(Policy).order_by(Policy.id))).all()
 
 
 @router.post("/api/policies", response_model=PolicyRead, status_code=201)
-async def create_policy(payload: PolicyCreate, session: AsyncSession = Depends(get_session)):
+async def create_policy(payload: PolicyCreate, session: SessionDep):
     policy = Policy(**payload.model_dump())
     session.add(policy)
     await session.commit()
@@ -71,7 +82,7 @@ async def create_policy(payload: PolicyCreate, session: AsyncSession = Depends(g
 
 
 @router.post("/api/executions", response_model=ExecRead)
-async def execute(payload: ExecRequest, session: AsyncSession = Depends(get_session)):
+async def execute(payload: ExecRequest, session: SessionDep):
     try:
         return await ExecutionService(session).submit(payload, client="rest")
     except ValueError as exc:
@@ -79,7 +90,7 @@ async def execute(payload: ExecRequest, session: AsyncSession = Depends(get_sess
 
 
 @router.get("/api/executions/{execution_id}", response_model=ExecRead)
-async def execution(execution_id: str, session: AsyncSession = Depends(get_session)):
+async def execution(execution_id: str, session: SessionDep):
     result = await ExecutionService(session).get(execution_id)
     if result is None:
         raise HTTPException(status_code=404, detail="execution not found")
@@ -87,14 +98,14 @@ async def execution(execution_id: str, session: AsyncSession = Depends(get_sessi
 
 
 @router.get("/api/approvals", response_model=list[ApprovalRead])
-async def approvals(session: AsyncSession = Depends(get_session)):
+async def approvals(session: SessionDep):
     return (
         await session.scalars(select(Approval).order_by(Approval.created_at.desc()))
     ).all()
 
 
 @router.post("/api/approvals/{execution_id}/approve", response_model=ExecRead)
-async def approve(execution_id: str, session: AsyncSession = Depends(get_session)):
+async def approve(execution_id: str, session: SessionDep):
     try:
         return await ExecutionService(session).approve(execution_id)
     except ValueError as exc:
@@ -102,7 +113,7 @@ async def approve(execution_id: str, session: AsyncSession = Depends(get_session
 
 
 @router.post("/api/approvals/{execution_id}/deny", response_model=ExecRead)
-async def deny(execution_id: str, session: AsyncSession = Depends(get_session)):
+async def deny(execution_id: str, session: SessionDep):
     try:
         return await ExecutionService(session).deny(execution_id)
     except ValueError as exc:

@@ -1,6 +1,5 @@
-from sqlalchemy import select
-
 from mcp.server import MCPServer
+from sqlalchemy import select
 
 from .db import SessionLocal
 from .models import Host
