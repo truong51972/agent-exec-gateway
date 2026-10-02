@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Approvals · Agent Exec Gateway{% endblock %}
+{% block content %}
+<h1>Approvals</h1>
+<div class="muted">Approve once, turn the exact request/skill into an allow rule, or deny it.</div>
+<pre class="result" id="approval-result" hidden></pre>
+<table><thead><tr><th>Client</th><th>Host</th><th>Command</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+{% for a in approvals %}
+{% set e = executions.get(a.execution_id) %}
+<tr><td>{{ e.client if e else '—' }}</td><td>{{ e.host_name if e else '—' }}</td><td><code>{{ e.argv|join(' ') if e else a.execution_id }}</code></td><td class="{{ a.status }}">{{ a.status }}</td>
+<td class="actions">{% if a.status == 'pending' %}
+<button onclick="approveExec('{{ a.execution_id }}', false)">Allow once</button>
+<button onclick="approveExec('{{ a.execution_id }}', true)">Always allow</button>
+<button class="danger" onclick="denyExec('{{ a.execution_id }}')">Deny</button>
+{% endif %}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">No approvals.</td></tr>{% endfor %}
+</tbody></table>
+<script>
+async function approveExec(id, always){try{showResult("approval-result",await aegRequest(`/api/approvals/${id}/approve?always_allow=${always}`,{method:"POST"}));setTimeout(()=>location.reload(),500);}catch(e){showResult("approval-result",e.message);}}
+async function denyExec(id){try{showResult("approval-result",await aegRequest(`/api/approvals/${id}/deny`,{method:"POST"}));setTimeout(()=>location.reload(),500);}catch(e){showResult("approval-result",e.message);}}
+</script>
+{% endblock %}
