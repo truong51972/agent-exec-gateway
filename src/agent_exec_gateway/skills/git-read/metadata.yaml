@@ -1,0 +1,15 @@
+name: git-read
+description: Inspect Git repositories without changing working tree or remote state.
+requires:
+  commands: [git]
+permissions:
+  - command: git
+    args_prefix: [status]
+  - command: git
+    args_prefix: [diff]
+  - command: git
+    args_prefix: [log]
+  - command: git
+    args_prefix: [show]
+  - command: git
+    args_prefix: [rev-parse]

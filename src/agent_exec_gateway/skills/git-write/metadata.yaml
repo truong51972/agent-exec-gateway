@@ -1,0 +1,15 @@
+name: git-write
+description: Perform common local Git mutations. Remote push remains a separate policy concern.
+requires:
+  commands: [git]
+permissions:
+  - command: git
+    args_prefix: [add]
+  - command: git
+    args_prefix: [commit]
+  - command: git
+    args_prefix: [restore]
+  - command: git
+    args_prefix: [switch]
+  - command: git
+    args_prefix: [checkout]

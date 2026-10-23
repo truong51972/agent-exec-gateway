@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Agent Exec Gateway{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js"></script>
+</head>
+<body>
+<header><nav>
+  <strong>Agent Exec Gateway</strong>
+  <a href="/">Overview</a>
+  <a href="/hosts">Hosts</a>
+  <a href="/clients">Clients</a>
+  <a href="/policies">Policies</a>
+  <a href="/skills">Skills</a>
+  <a href="/approvals">Approvals</a>
+  <a href="/audit">Audit</a>
+  <a href="/docs">API</a>
+</nav></header>
+<main>{% block content %}{% endblock %}</main>
+</body>
+</html>

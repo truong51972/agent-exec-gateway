@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Policies · Agent Exec Gateway{% endblock %}
+{% block content %}
+<h1>Policies</h1>
+<div class="muted">Command rules are exact/prefix based. Skill grants provide a higher-level permission surface.</div>
+<h2>Command policy</h2>
+<form class="panel" id="policy-form">
+<div class="form-grid">
+<label>Client<input name="client" value="*"></label>
+<label>Host<input name="host" value="*"></label>
+<label>Command<input name="command" value="*"></label>
+<label>Args prefix (space separated)<input name="args"></label>
+<label>Decision<select name="decision"><option>allow</option><option selected>ask</option><option>deny</option></select></label>
+</div><button class="primary">Add rule</button>
+</form>
+<table><thead><tr><th>Client</th><th>Host</th><th>Command</th><th>Args prefix</th><th>Decision</th><th></th></tr></thead><tbody>
+{% for p in policies %}<tr><td>{{ p.client }}</td><td>{{ p.host }}</td><td><code>{{ p.command }}</code></td><td><code>{{ p.args_prefix|join(' ') }}</code></td><td class="{{ p.decision }}">{{ p.decision }}</td><td><button class="danger" onclick="delPolicy({{ p.id }})">Delete</button></td></tr>
+{% else %}<tr><td colspan="6" class="muted">No explicit command rules. Default decision applies.</td></tr>{% endfor %}
+</tbody></table>
+<h2>Skill grants</h2>
+<form class="panel" id="grant-form">
+<div class="form-grid">
+<label>Client<input name="client" value="*"></label>
+<label>Host<input name="host" value="*"></label>
+<label>Skill<select name="skill">{% for s in skills %}<option value="{{ s.name }}">{{ s.name }}</option>{% endfor %}</select></label>
+<label>Decision<select name="decision"><option>allow</option><option selected>ask</option><option>deny</option></select></label>
+</div><button class="primary">Add grant</button>
+</form>
+<table><thead><tr><th>Client</th><th>Host</th><th>Skill</th><th>Decision</th><th></th></tr></thead><tbody>
+{% for g in grants %}<tr><td>{{ g.client }}</td><td>{{ g.host }}</td><td>{{ g.skill }}</td><td class="{{ g.decision }}">{{ g.decision }}</td><td><button class="danger" onclick="delGrant({{ g.id }})">Delete</button></td></tr>
+{% else %}<tr><td colspan="5" class="muted">No skill grants.</td></tr>{% endfor %}
+</tbody></table>
+<pre class="result" id="policy-result" hidden></pre>
+<script>
+document.getElementById("policy-form").addEventListener("submit", async (event) => {
+ event.preventDefault(); const d=formObject(event.target); const payload={client:d.client||"*",host:d.host||"*",command:d.command||"*",args_prefix:(d.args||"").trim()?d.args.trim().split(/\s+/):[],decision:d.decision};
+ try { await aegRequest("/api/policies",{method:"POST",body:JSON.stringify(payload)}); location.reload(); } catch(e){showResult("policy-result",e.message);}
+});
+document.getElementById("grant-form").addEventListener("submit", async (event) => {
+ event.preventDefault(); try { await aegRequest("/api/skill-grants",{method:"POST",body:JSON.stringify(formObject(event.target))}); location.reload(); } catch(e){showResult("policy-result",e.message);}
+});
+async function delPolicy(id){await aegRequest(`/api/policies/${id}`,{method:"DELETE"});location.reload();}
+async function delGrant(id){await aegRequest(`/api/skill-grants/${id}`,{method:"DELETE"});location.reload();}
+</script>
+{% endblock %}

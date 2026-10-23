@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Hosts · Agent Exec Gateway{% endblock %}
+{% block content %}
+<h1>Hosts</h1>
+<div class="muted">Register SSH targets, generate the gateway key once, test connectivity, then scan capabilities.</div>
+<form class="panel" id="host-form">
+  <div class="form-grid">
+    <label>Name<input name="name" required></label>
+    <label>Hostname<input name="hostname" required></label>
+    <label>Username<input name="username"></label>
+    <label>Port<input name="port" type="number" value="22"></label>
+  </div>
+  <button class="primary">Add SSH host</button>
+</form>
+<pre class="result" id="host-result" hidden></pre>
+<table><thead><tr><th>Host</th><th>Target</th><th>Identity</th><th>Skills</th><th>Actions</th></tr></thead><tbody>
+{% for host in hosts %}
+<tr>
+<td><strong>{{ host.name }}</strong><br><span class="badge">{{ host.transport }}</span></td>
+<td>{{ host.hostname or "local" }}{% if host.hostname %}:{{ host.port }}{% endif %}<br>{{ host.username or "" }}</td>
+<td><code>{{ host.identity_file or "default SSH identity" }}</code></td>
+<td>
+{% for cap in capabilities[host.name] %}
+<span class="{{ 'available' if cap.available else 'unavailable' }}">{{ cap.skill }} {{ '✓' if cap.available else '✗' }}</span><br>
+{% else %}<span class="muted">Not scanned</span>{% endfor %}
+</td>
+<td class="actions">
+{% if host.transport == "ssh" %}<button onclick="pairHost('{{ host.name }}')">Pair</button>{% endif %}
+<button onclick="testHost('{{ host.name }}')">Test</button>
+<button onclick="scanHost('{{ host.name }}')">Scan</button>
+</td>
+</tr>
+{% endfor %}
+</tbody></table>
+<script>
+document.getElementById("host-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = formObject(event.target);
+  data.port = Number(data.port || 22);
+  data.transport = "ssh";
+  if (!data.username) data.username = null;
+  try { showResult("host-result", await aegRequest("/api/hosts", {method:"POST", body:JSON.stringify(data)})); setTimeout(()=>location.reload(), 500); }
+  catch (e) { showResult("host-result", e.message); }
+});
+async function pairHost(name) {
+  try { const value = await aegRequest(`/api/hosts/${name}/pairing`, {method:"POST"}); showResult("host-result", `Public key:\n${value.public_key}\n\nRun once on target:\n${value.install_command}`); }
+  catch (e) { showResult("host-result", e.message); }
+}
+async function testHost(name) { try { showResult("host-result", await aegRequest(`/api/hosts/${name}/test`, {method:"POST"})); } catch(e) { showResult("host-result", e.message); } }
+async function scanHost(name) { try { showResult("host-result", await aegRequest(`/api/hosts/${name}/scan`, {method:"POST"})); setTimeout(()=>location.reload(), 500); } catch(e) { showResult("host-result", e.message); } }
+</script>
+{% endblock %}

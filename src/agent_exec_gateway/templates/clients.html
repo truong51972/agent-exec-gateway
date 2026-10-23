@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Clients · Agent Exec Gateway{% endblock %}
+{% block content %}
+<h1>Clients & Sessions</h1>
+<div class="muted">Tokens identify MCP/REST clients. Raw tokens are shown only when created or rotated.</div>
+<form class="panel" id="client-form">
+  <div class="form-grid"><label>Client name<input name="name" required></label></div>
+  <button class="primary">Create client</button>
+</form>
+<pre class="result" id="client-result" hidden></pre>
+<table><thead><tr><th>Client</th><th>Token prefix</th><th>Enabled</th><th>Created</th><th>Actions</th></tr></thead><tbody>
+{% for client in clients %}
+<tr><td>{{ client.name }}</td><td><code>{{ client.token_prefix }}…</code></td><td>{{ client.enabled }}</td><td>{{ client.created_at }}</td>
+<td><button onclick="rotateClient('{{ client.name }}')">Rotate token</button></td></tr>
+{% else %}<tr><td colspan="5" class="muted">No named clients. Anonymous MCP remains available unless AEG_MCP_AUTH_REQUIRED=true.</td></tr>{% endfor %}
+</tbody></table>
+<h2>Recent sessions</h2>
+<table><thead><tr><th>Client</th><th>Protocol</th><th>External session</th><th>Last seen</th></tr></thead><tbody>
+{% for item in sessions %}<tr><td>{{ item.client_name }}</td><td>{{ item.protocol }}</td><td><code>{{ item.external_id }}</code></td><td>{{ item.last_seen_at }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">No sessions yet.</td></tr>{% endfor %}
+</tbody></table>
+<script>
+document.getElementById("client-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try { const value = await aegRequest("/api/clients", {method:"POST", body:JSON.stringify(formObject(event.target))}); showResult("client-result", `SAVE THIS TOKEN NOW:\n${value.token}`); }
+  catch(e) { showResult("client-result", e.message); }
+});
+async function rotateClient(name) {
+  try { const value = await aegRequest(`/api/clients/${name}/rotate`, {method:"POST"}); showResult("client-result", `REPLACEMENT TOKEN:\n${value.token}`); }
+  catch(e) { showResult("client-result", e.message); }
+}
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 [project]
 name = "agent-exec-gateway"
-version = "0.1.0"
+version = "0.2.0"
 description = "A small, auditable execution gateway for AI agents."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,6 +12,7 @@ dependencies = [
   "mcp>=1.17",
   "pydantic>=2.11",
   "pydantic-settings>=2.10",
+  "pyyaml>=6.0",
   "sqlalchemy[asyncio]>=2.0.40",
   "typer>=0.19",
   "uvicorn[standard]>=0.37",
@@ -31,6 +32,14 @@ aeg = "agent_exec_gateway.cli:app"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "src/agent_exec_gateway/**/*.py",
+  "src/agent_exec_gateway/templates/*.html",
+  "src/agent_exec_gateway/static/*",
+  "src/agent_exec_gateway/skills/**/*",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_exec_gateway"]

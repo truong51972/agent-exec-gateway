@@ -1,0 +1,7 @@
+name: browserskill
+description: Control an existing browser through Tencent BrowserSkill CLI.
+requires:
+  commands: [bsk]
+permissions:
+  - command: bsk
+    args_prefix: []

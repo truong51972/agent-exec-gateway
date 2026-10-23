@@ -1,38 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agent Exec Gateway</title>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f8; color: #18181b; }
-    main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
-    h1 { margin-bottom: 4px; } .muted { color: #71717a; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 16px; margin: 24px 0; }
-    .card, table { background: white; border: 1px solid #e4e4e7; border-radius: 10px; }
-    .card { padding: 18px; } .metric { font-size: 2rem; font-weight: 700; }
-    table { width: 100%; border-collapse: collapse; overflow: hidden; margin: 12px 0 28px; }
-    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-    th { background: #fafafa; } code { font-size: 12px; }
-    .pending { color: #a16207; } .completed { color: #15803d; } .denied, .failed { color: #b91c1c; }
-  </style>
-</head>
-<body><main>
-  <h1>Agent Exec Gateway</h1>
-  <div class="muted">MCP + REST + audited execution in one small service.</div>
-  <div class="grid">
-    <div class="card"><div class="muted">Hosts</div><div class="metric">{{ hosts|length }}</div></div>
-    <div class="card"><div class="muted">Pending approvals</div><div class="metric">{{ approvals|length }}</div></div>
-    <div class="card"><div class="muted">Recent executions</div><div class="metric">{{ executions|length }}</div></div>
-  </div>
-  <h2>Pending approvals</h2>
-  <table><thead><tr><th>Execution</th><th>Status</th><th>Created</th></tr></thead><tbody>
-  {% for approval in approvals %}<tr><td><code>{{ approval.execution_id }}</code></td><td class="pending">{{ approval.status }}</td><td>{{ approval.created_at }}</td></tr>
-  {% else %}<tr><td colspan="3" class="muted">No pending approvals.</td></tr>{% endfor %}
-  </tbody></table>
-  <h2>Recent executions</h2>
-  <table><thead><tr><th>Host</th><th>Command</th><th>Decision</th><th>Status</th></tr></thead><tbody>
-  {% for item in executions %}<tr><td>{{ item.host_name }}</td><td><code>{{ item.argv|join(' ') }}</code></td><td>{{ item.decision }}</td><td class="{{ item.status }}">{{ item.status }}</td></tr>
-  {% else %}<tr><td colspan="4" class="muted">No executions yet.</td></tr>{% endfor %}
-  </tbody></table>
-</main></body></html>
+{% extends "base.html" %}
+{% block content %}
+<h1>Overview</h1>
+<div class="muted">MCP + REST + policy-controlled local/SSH execution in one process.</div>
+<div class="grid">
+  <div class="card"><div class="muted">Hosts</div><div class="metric">{{ hosts|length }}</div></div>
+  <div class="card"><div class="muted">Clients</div><div class="metric">{{ clients|length }}</div></div>
+  <div class="card"><div class="muted">Pending approvals</div><div class="metric">{{ approvals|length }}</div></div>
+  <div class="card"><div class="muted">Recent executions</div><div class="metric">{{ executions|length }}</div></div>
+</div>
+<h2>Recent executions</h2>
+<table><thead><tr><th>Client</th><th>Host</th><th>Command</th><th>Decision</th><th>Status</th></tr></thead><tbody>
+{% for item in executions %}
+<tr><td>{{ item.client }}</td><td>{{ item.host_name }}</td><td><code>{{ item.argv|join(' ') }}</code></td><td class="{{ item.decision }}">{{ item.decision }}</td><td class="{{ item.status }}">{{ item.status }}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">No executions yet.</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}
